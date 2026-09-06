@@ -28,8 +28,6 @@ h1 { margin: 0 0 12px; }
   position: relative;
   width: min(100%, 400px);
   margin: 0 auto;
-  touch-action: none;
-  overscroll-behavior: contain;
 }
 
 canvas {
@@ -39,7 +37,6 @@ canvas {
   border: 2px solid #222;
   background: #111;
   border-radius: 6px;
-  touch-action: none;
 }
 
 .overlay {
@@ -85,10 +82,20 @@ canvas {
   border-color: #222;
 }
 
+.difficulty-help {
+  font-size: 12px;
+  color: #666;
+  margin: -6px 0 12px !important;
+}
+
 .control-help {
   font-size: 13px;
   color: #666;
   margin-bottom: 18px !important;
+}
+
+.mobile-joystick {
+  display: none;
 }
 
 .instructions {
@@ -156,6 +163,76 @@ button:active { transform: scale(0.96); }
 }
 
 .secondary-btn { padding: 10px 20px; }
+
+@media (max-width: 700px) {
+  .mobile-joystick {
+    display: block;
+    margin: 10px auto 8px;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .joystick-title {
+    margin: 0 0 2px;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .joystick-help {
+    margin: 0 0 8px;
+    color: #666;
+    font-size: 13px;
+  }
+
+  .joystick {
+    width: 190px;
+    height: 190px;
+    margin: 0 auto;
+    display: grid;
+    place-items: center;
+    touch-action: none;
+    outline: none;
+  }
+
+  .joystick-base {
+    position: relative;
+    width: 172px;
+    height: 172px;
+    border-radius: 50%;
+    background: #222;
+    box-shadow: inset 0 0 0 9px #444, 0 6px 12px rgba(0, 0, 0, 0.18);
+    display: grid;
+    place-items: center;
+  }
+
+  .joystick-stick {
+    position: relative;
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    background: #d62f2f;
+    box-shadow: 0 6px 0 #9c2020, inset 0 5px 8px rgba(255, 255, 255, 0.35);
+    transform: translate(0, 0);
+    transition: transform 70ms ease-out;
+    touch-action: none;
+  }
+
+  .joystick-arrow {
+    position: absolute;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.92);
+    line-height: 1;
+  }
+
+  .joystick-arrow.up { top: 7px; left: 50%; transform: translateX(-50%); }
+  .joystick-arrow.down { bottom: 7px; left: 50%; transform: translateX(-50%); }
+  .joystick-arrow.left { left: 7px; top: 50%; transform: translateY(-50%); }
+  .joystick-arrow.right { right: 7px; top: 50%; transform: translateY(-50%); }
+}
+
+@media (min-width: 701px) {
+  .mobile-joystick { display: none; }
+}
 
 @media (max-width: 480px) {
   .game-wrap { padding: 18px; }
