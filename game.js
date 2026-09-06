@@ -12,10 +12,10 @@ const gameBoard = document.getElementById('game-board');
 const grid = 20;
 const tileCount = canvas.width / grid;
 const countdownSeconds = 3;
-const swipeThreshold = 24;
+const swipeThreshold = 18;
 
-let speed = 110;
-let selectedSpeed = 110;
+let speed = 160;
+let selectedSpeed = 160;
 let snake;
 let food;
 let direction;
@@ -27,15 +27,15 @@ let preparing;
 let timer;
 let countdownTimer;
 let countdownStartTimer;
-let pointerStartX = null;
-let pointerStartY = null;
-let activePointerId = null;
+let touchStartX = null;
+let touchStartY = null;
+let touchDirectionChanged = false;
 
 function resetGame() {
   clearInterval(timer);
   clearInterval(countdownTimer);
   clearTimeout(countdownStartTimer);
-  resetPointerTracking();
+  resetTouchTracking();
 
   snake = [{ x: 10, y: 10 }];
   food = randomFood();
@@ -118,7 +118,6 @@ function setDirection(newDirection) {
   if (!gameStarted || gameOver || preparing) return;
 
   // 현재 진행 방향과 정반대인 입력만 차단한다.
-  // 다음 방향을 기준으로 검사하면 빠르게 연속 입력했을 때 정상적인 방향 전환까지 막힐 수 있다.
   if (newDirection.x + direction.x === 0 && newDirection.y + direction.y === 0) return;
 
   nextDirection = newDirection;
@@ -175,7 +174,7 @@ function endGame() {
   clearInterval(timer);
   clearInterval(countdownTimer);
   clearTimeout(countdownStartTimer);
-  resetPointerTracking();
+  resetTouchTracking();
   countdownTimer = null;
   countdownStartTimer = null;
   countdownEl.hidden = true;
@@ -212,66 +211,58 @@ function handleKeydown(event) {
   setDirection(newDirection);
 }
 
-function handlePointerDown(event) {
+function handleTouchStart(event) {
   if (!gameStarted || gameOver || preparing) return;
-  if (activePointerId !== null) return;
+  if (!event.touches.length) return;
 
-  activePointerId = event.pointerId;
-  pointerStartX = event.clientX;
-  pointerStartY = event.clientY;
+  const touch = event.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+  touchDirectionChanged = false;
+  event.preventDefault();
+}
 
-  if (gameBoard.setPointerCapture) {
-    gameBoard.setPointerCapture(event.pointerId);
+function handleTouchMove(event) {
+  if (!gameStarted || gameOver || preparing) return;
+  if (touchStartX === null || touchStartY === null || touchDirectionChanged) {
+    event.preventDefault();
+    return;
   }
 
-  event.preventDefault();
-}
-
-function handlePointerMove(event) {
-  if (event.pointerId !== activePointerId) return;
-  event.preventDefault();
-}
-
-function handlePointerUp(event) {
-  if (event.pointerId !== activePointerId || pointerStartX === null || pointerStartY === null) return;
-
-  const deltaX = event.clientX - pointerStartX;
-  const deltaY = event.clientY - pointerStartY;
+  const touch = event.touches[0];
+  const deltaX = touch.clientX - touchStartX;
+  const deltaY = touch.clientY - touchStartY;
   const absX = Math.abs(deltaX);
   const absY = Math.abs(deltaY);
 
-  if (Math.max(absX, absY) >= swipeThreshold) {
-    if (absX > absY) {
-      setDirection(deltaX > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
-    } else {
-      setDirection(deltaY > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
-    }
+  if (Math.max(absX, absY) < swipeThreshold) {
+    event.preventDefault();
+    return;
   }
 
-  resetPointerTracking(event.pointerId);
+  const newDirection = absX > absY
+    ? (deltaX > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 })
+    : (deltaY > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+
+  setDirection(newDirection);
+  touchDirectionChanged = true;
   event.preventDefault();
 }
 
-function handlePointerCancel(event) {
-  if (event.pointerId !== activePointerId) return;
-  resetPointerTracking(event.pointerId);
+function handleTouchEnd(event) {
+  resetTouchTracking();
+  event.preventDefault();
 }
 
-function resetPointerTracking(pointerId = null) {
-  if (pointerId !== null && activePointerId !== pointerId) return;
+function handleTouchCancel(event) {
+  resetTouchTracking();
+  event.preventDefault();
+}
 
-  pointerStartX = null;
-  pointerStartY = null;
-
-  if (activePointerId !== null && gameBoard.releasePointerCapture) {
-    try {
-      gameBoard.releasePointerCapture(activePointerId);
-    } catch (error) {
-      // Pointer capture가 이미 해제된 경우에는 무시한다.
-    }
-  }
-
-  activePointerId = null;
+function resetTouchTracking() {
+  touchStartX = null;
+  touchStartY = null;
+  touchDirectionChanged = false;
 }
 
 document.addEventListener('keydown', handleKeydown);
@@ -282,10 +273,9 @@ difficultyButtons.forEach(button => {
   button.addEventListener('click', () => selectDifficulty(button));
 });
 
-gameBoard.addEventListener('pointerdown', handlePointerDown, { passive: false });
-gameBoard.addEventListener('pointermove', handlePointerMove, { passive: false });
-gameBoard.addEventListener('pointerup', handlePointerUp, { passive: false });
-gameBoard.addEventListener('pointercancel', handlePointerCancel, { passive: false });
-gameBoard.addEventListener('lostpointercapture', () => resetPointerTracking());
+gameBoard.addEventListener('touchstart', handleTouchStart, { passive: false });
+gameBoard.addEventListener('touchmove', handleTouchMove, { passive: false });
+gameBoard.addEventListener('touchend', handleTouchEnd, { passive: false });
+gameBoard.addEventListener('touchcancel', handleTouchCancel, { passive: false });
 
 resetGame();
