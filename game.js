@@ -2,30 +2,50 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('score');
 const messageEl = document.getElementById('message');
+const startScreen = document.getElementById('start-screen');
+const startBtn = document.getElementById('start');
 const restartBtn = document.getElementById('restart');
+const controlButtons = document.querySelectorAll('.control-btn');
 
 const grid = 20;
 const tileCount = canvas.width / grid;
+const speed = 110;
 let snake;
 let food;
 let direction;
 let nextDirection;
 let score;
+let gameStarted;
 let gameOver;
 let timer;
 
 function resetGame() {
+  clearInterval(timer);
   snake = [{ x: 10, y: 10 }];
   food = randomFood();
-  direction = { x: 1, y: 0 };
-  nextDirection = { x: 1, y: 0 };
+  direction = { x: 0, y: 0 };
+  nextDirection = { x: 0, y: 0 };
   score = 0;
+  gameStarted = false;
   gameOver = false;
   scoreEl.textContent = score;
-  messageEl.textContent = '방향키로 지렁이를 움직여보세요!';
-  clearInterval(timer);
-  timer = setInterval(update, 110);
+  messageEl.textContent = 'START 버튼을 눌러 게임을 시작하세요.';
+  startScreen.hidden = false;
+  startBtn.textContent = 'START';
   draw();
+}
+
+function startGame() {
+  if (gameStarted) return;
+  if (gameOver) resetGame();
+  gameStarted = true;
+  gameOver = false;
+  startScreen.hidden = true;
+  direction = { x: 1, y: 0 };
+  nextDirection = { x: 1, y: 0 };
+  messageEl.textContent = '먹이를 먹어보세요!';
+  clearInterval(timer);
+  timer = setInterval(update, speed);
 }
 
 function randomFood() {
@@ -39,8 +59,14 @@ function randomFood() {
   return position;
 }
 
+function setDirection(newDirection) {
+  if (!gameStarted || gameOver) return;
+  if (newDirection.x + direction.x === 0 && newDirection.y + direction.y === 0) return;
+  nextDirection = newDirection;
+}
+
 function update() {
-  if (gameOver) return;
+  if (!gameStarted || gameOver) return;
 
   direction = nextDirection;
   const head = {
@@ -77,19 +103,22 @@ function draw() {
   ctx.fillStyle = '#e74c3c';
   ctx.fillRect(food.x * grid, food.y * grid, grid - 1, grid - 1);
 
-  ctx.fillStyle = '#4caf50';
-  snake.forEach(segment => {
+  snake.forEach((segment, index) => {
+    ctx.fillStyle = index === 0 ? '#2e7d32' : '#4caf50';
     ctx.fillRect(segment.x * grid, segment.y * grid, grid - 1, grid - 1);
   });
 }
 
 function endGame() {
   gameOver = true;
+  gameStarted = false;
   clearInterval(timer);
   messageEl.textContent = `게임 오버! 최종 점수: ${score}`;
+  startScreen.hidden = false;
+  startBtn.textContent = '다시 시작';
 }
 
-window.addEventListener('keydown', event => {
+function handleKeydown(event) {
   const keyDirections = {
     ArrowUp: { x: 0, y: -1 },
     ArrowDown: { x: 0, y: 1 },
@@ -101,9 +130,25 @@ window.addEventListener('keydown', event => {
   if (!newDirection) return;
 
   event.preventDefault();
-  if (newDirection.x + direction.x === 0 && newDirection.y + direction.y === 0) return;
-  nextDirection = newDirection;
+  setDirection(newDirection);
+}
+
+document.addEventListener('keydown', handleKeydown);
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', resetGame);
+
+controlButtons.forEach(button => {
+  const directions = {
+    up: { x: 0, y: -1 },
+    down: { x: 0, y: 1 },
+    left: { x: -1, y: 0 },
+    right: { x: 1, y: 0 }
+  };
+
+  button.addEventListener('pointerdown', event => {
+    event.preventDefault();
+    setDirection(directions[button.dataset.direction]);
+  });
 });
 
-restartBtn.addEventListener('click', resetGame);
 resetGame();
