@@ -50,6 +50,10 @@ canvas {
   border-radius: 6px;
 }
 
+.overlay[hidden] {
+  display: none;
+}
+
 .overlay h2 { margin: 0 0 12px; }
 .overlay p { line-height: 1.5; margin: 0 0 18px; }
 
