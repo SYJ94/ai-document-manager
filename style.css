@@ -91,6 +91,35 @@ canvas {
   margin-bottom: 18px !important;
 }
 
+.instructions {
+  margin: 18px auto 14px;
+  padding: 16px 18px;
+  max-width: 400px;
+  text-align: left;
+  background: #f8f8f8;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  line-height: 1.55;
+}
+
+.instructions h2 {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 19px;
+}
+
+.instructions p {
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.instructions-tip {
+  margin-top: 12px !important;
+  padding-top: 10px;
+  border-top: 1px solid #e5e5e5;
+  color: #555;
+}
+
 .countdown {
   position: absolute;
   inset: 0;
@@ -133,4 +162,5 @@ button:active { transform: scale(0.96); }
   h1 { font-size: 28px; }
   .difficulty { gap: 6px; }
   .difficulty-btn { padding: 8px 11px; }
+  .instructions { padding: 14px 15px; }
 }
