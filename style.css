@@ -8,9 +8,11 @@ body {
   align-items: center;
   font-family: Arial, sans-serif;
   background: #f4f4f4;
+  touch-action: manipulation;
 }
 
 .game-wrap {
+  width: min(92vw, 460px);
   text-align: center;
   background: white;
   padding: 24px;
@@ -21,22 +23,81 @@ body {
 h1 { margin: 0 0 12px; }
 .score { font-size: 20px; margin-bottom: 12px; }
 
-canvas {
-  display: block;
-  border: 2px solid #222;
-  background: #111;
+.game-board {
+  position: relative;
+  width: min(100%, 400px);
+  margin: 0 auto;
 }
 
-#message { min-height: 24px; }
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 2px solid #222;
+  background: #111;
+  border-radius: 6px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.94);
+  border-radius: 6px;
+}
+
+.overlay h2 { margin: 0 0 12px; }
+.overlay p { line-height: 1.5; margin: 0 0 18px; }
+
+#message { min-height: 24px; margin: 12px 0; }
 
 button {
-  padding: 10px 20px;
   border: 0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #222;
   color: white;
   cursor: pointer;
   font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
-button:hover { opacity: 0.85; }
+button:active { transform: scale(0.96); }
+
+#start {
+  padding: 12px 28px;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: 8px auto 14px;
+}
+
+.control-row { display: flex; gap: 8px; }
+
+.control-btn {
+  width: 58px;
+  height: 50px;
+  font-size: 22px;
+}
+
+.secondary-btn { padding: 10px 20px; }
+
+@media (min-width: 700px) {
+  .controls { display: none; }
+}
+
+@media (max-width: 480px) {
+  .game-wrap { padding: 18px; }
+  h1 { font-size: 28px; }
+  .control-btn { width: 64px; height: 54px; }
+}
