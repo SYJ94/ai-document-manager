@@ -21,34 +21,15 @@ body {
 }
 
 h1 { margin: 0 0 12px; }
+.version { font-size: 13px; font-weight: 600; color: #777; vertical-align: middle; }
 .score { font-size: 20px; margin-bottom: 12px; }
-
-.difficulty {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  font-size: 15px;
-}
-
-.difficulty-btn {
-  padding: 7px 12px;
-  background: #eee;
-  color: #222;
-  border: 1px solid #ddd;
-}
-
-.difficulty-btn.active {
-  background: #222;
-  color: white;
-  border-color: #222;
-}
 
 .game-board {
   position: relative;
   width: min(100%, 400px);
   margin: 0 auto;
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 
 canvas {
@@ -78,8 +59,37 @@ canvas {
   display: none;
 }
 
-.overlay h2 { margin: 0 0 12px; }
-.overlay p { line-height: 1.5; margin: 0 0 18px; }
+.overlay h2 { margin: 0 0 10px; }
+.overlay p { line-height: 1.5; margin: 0 0 14px; }
+
+.difficulty {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 14px;
+  font-size: 15px;
+  flex-wrap: wrap;
+}
+
+.difficulty-btn {
+  padding: 8px 12px;
+  background: #eee;
+  color: #222;
+  border: 1px solid #ddd;
+}
+
+.difficulty-btn.active {
+  background: #222;
+  color: white;
+  border-color: #222;
+}
+
+.control-help {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 18px !important;
+}
 
 .countdown {
   position: absolute;
@@ -121,6 +131,6 @@ button:active { transform: scale(0.96); }
 @media (max-width: 480px) {
   .game-wrap { padding: 18px; }
   h1 { font-size: 28px; }
-  .difficulty { gap: 6px; flex-wrap: wrap; }
+  .difficulty { gap: 6px; }
   .difficulty-btn { padding: 8px 11px; }
 }
