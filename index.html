@@ -11,27 +11,24 @@
     <h1>🪱 지렁이 게임</h1>
     <div class="score">점수: <span id="score">0</span></div>
 
+    <div class="difficulty" aria-label="난이도 선택">
+      <span>난이도</span>
+      <button class="difficulty-btn" data-speed="150">쉬움</button>
+      <button class="difficulty-btn active" data-speed="110">보통</button>
+      <button class="difficulty-btn" data-speed="80">어려움</button>
+    </div>
+
     <div class="game-board">
       <canvas id="game" width="400" height="400"></canvas>
       <div id="start-screen" class="overlay">
         <h2>게임 준비!</h2>
-        <p>PC에서는 방향키로,<br>휴대폰에서는 화면 버튼으로 움직이세요.</p>
+        <p>PC에서는 방향키로,<br>휴대폰에서는 화면을 스와이프해서 움직이세요.</p>
         <button id="start">START</button>
       </div>
       <div id="countdown" class="countdown" hidden aria-live="polite"></div>
     </div>
 
     <p id="message">START 버튼을 눌러 게임을 시작하세요.</p>
-
-    <div class="controls" aria-label="게임 조작 버튼">
-      <button class="control-btn up" data-direction="up" aria-label="위로">▲</button>
-      <div class="control-row">
-        <button class="control-btn" data-direction="left" aria-label="왼쪽">◀</button>
-        <button class="control-btn" data-direction="down" aria-label="아래로">▼</button>
-        <button class="control-btn" data-direction="right" aria-label="오른쪽">▶</button>
-      </div>
-    </div>
-
     <button id="restart" class="secondary-btn">다시 시작</button>
   </main>
   <script src="game.js"></script>
