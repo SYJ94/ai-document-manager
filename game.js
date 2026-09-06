@@ -35,9 +35,14 @@ function resetGame() {
   draw();
 }
 
-function startGame() {
+function startGame(event) {
+  if (event) event.preventDefault();
   if (gameStarted) return;
-  if (gameOver) resetGame();
+
+  if (gameOver) {
+    resetGame();
+  }
+
   gameStarted = true;
   gameOver = false;
   startScreen.hidden = true;
@@ -46,6 +51,7 @@ function startGame() {
   messageEl.textContent = '먹이를 먹어보세요!';
   clearInterval(timer);
   timer = setInterval(update, speed);
+  draw();
 }
 
 function randomFood() {
@@ -135,6 +141,7 @@ function handleKeydown(event) {
 
 document.addEventListener('keydown', handleKeydown);
 startBtn.addEventListener('click', startGame);
+startBtn.addEventListener('pointerup', startGame);
 restartBtn.addEventListener('click', resetGame);
 
 controlButtons.forEach(button => {
@@ -145,10 +152,13 @@ controlButtons.forEach(button => {
     right: { x: 1, y: 0 }
   };
 
-  button.addEventListener('pointerdown', event => {
+  const handleControl = (event) => {
     event.preventDefault();
     setDirection(directions[button.dataset.direction]);
-  });
+  };
+
+  button.addEventListener('pointerdown', handleControl);
+  button.addEventListener('click', handleControl);
 });
 
 resetGame();
