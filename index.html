@@ -25,13 +25,28 @@
         </div>
 
         <p class="difficulty-help">쉬움: 천천히 · 보통: 적당한 속도 · 어려움: 빠르게</p>
-        <p class="control-help">PC: 방향키 또는 W/A/S/D · 휴대폰: 게임 화면을 원하는 방향으로 스와이프</p>
+        <p class="control-help">PC: 방향키 또는 W/A/S/D · 휴대폰: 아래 조이스틱</p>
         <button type="button" id="start">START</button>
       </div>
       <div id="countdown" class="countdown" hidden aria-live="polite"></div>
     </div>
 
     <p id="message">난이도를 선택하고 START 버튼을 눌러 게임을 시작하세요.</p>
+
+    <section class="mobile-joystick" aria-label="휴대폰용 4방향 조이스틱">
+      <p class="joystick-title">휴대폰 조작</p>
+      <p class="joystick-help">조이스틱을 위·아래·왼쪽·오른쪽으로 밀어주세요.</p>
+      <div id="joystick" class="joystick" role="application" aria-label="4방향 가상 조이스틱" tabindex="0">
+        <div class="joystick-base">
+          <div id="joystick-stick" class="joystick-stick">
+            <span class="joystick-arrow up" aria-hidden="true">▲</span>
+            <span class="joystick-arrow down" aria-hidden="true">▼</span>
+            <span class="joystick-arrow left" aria-hidden="true">◀</span>
+            <span class="joystick-arrow right" aria-hidden="true">▶</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="instructions" aria-labelledby="instructions-title">
       <h2 id="instructions-title">게임 방법</h2>
@@ -40,7 +55,7 @@
       <p>🍎 지렁이가 먹이를 먹으면 몸이 한 칸씩 길어지고 점수가 올라갑니다.</p>
       <p>💥 벽이나 자기 몸에 부딪히면 게임이 끝납니다.</p>
       <p>🪱 먹이를 최대한 많이 먹고 지렁이를 잘 키워보세요!</p>
-      <p class="instructions-tip"><strong>조작 방법</strong><br>PC에서는 방향키 또는 W/A/S/D를 사용하고, 휴대폰에서는 게임 화면을 원하는 방향으로 밀어주세요.</p>
+      <p class="instructions-tip"><strong>조작 방법</strong><br>PC에서는 방향키 또는 W/A/S/D를 사용하고, 휴대폰에서는 아래 조이스틱을 4방향으로 밀어주세요.</p>
     </section>
 
     <button type="button" id="restart" class="secondary-btn">다시 시작</button>
