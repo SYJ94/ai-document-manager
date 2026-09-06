@@ -50,12 +50,27 @@ canvas {
   border-radius: 6px;
 }
 
-.overlay[hidden] {
+.overlay[hidden],
+.countdown[hidden] {
   display: none;
 }
 
 .overlay h2 { margin: 0 0 12px; }
 .overlay p { line-height: 1.5; margin: 0 0 18px; }
+
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.35);
+  color: white;
+  font-size: 88px;
+  font-weight: 800;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  border-radius: 6px;
+}
 
 #message { min-height: 24px; margin: 12px 0; }
 
