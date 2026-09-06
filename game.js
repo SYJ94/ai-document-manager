@@ -5,11 +5,13 @@ const messageEl = document.getElementById('message');
 const startScreen = document.getElementById('start-screen');
 const startBtn = document.getElementById('start');
 const restartBtn = document.getElementById('restart');
+const countdownEl = document.getElementById('countdown');
 const controlButtons = document.querySelectorAll('.control-btn');
 
 const grid = 20;
 const tileCount = canvas.width / grid;
 const speed = 110;
+const countdownSeconds = 3;
 let snake;
 let food;
 let direction;
@@ -17,10 +19,15 @@ let nextDirection;
 let score;
 let gameStarted;
 let gameOver;
+let preparing;
 let timer;
+let countdownTimer;
+let countdownStartTimer;
 
 function resetGame() {
   clearInterval(timer);
+  clearInterval(countdownTimer);
+  clearTimeout(countdownStartTimer);
   snake = [{ x: 10, y: 10 }];
   food = randomFood();
   direction = { x: 0, y: 0 };
@@ -28,30 +35,60 @@ function resetGame() {
   score = 0;
   gameStarted = false;
   gameOver = false;
+  preparing = false;
   scoreEl.textContent = score;
   messageEl.textContent = 'START 버튼을 눌러 게임을 시작하세요.';
   startScreen.hidden = false;
+  countdownEl.hidden = true;
+  countdownEl.textContent = '';
   startBtn.textContent = 'START';
   draw();
 }
 
 function startGame(event) {
   if (event) event.preventDefault();
-  if (gameStarted) return;
+  if (gameStarted || preparing) return;
 
   if (gameOver) {
     resetGame();
   }
 
-  gameStarted = true;
-  gameOver = false;
+  preparing = true;
   startScreen.hidden = true;
   direction = { x: 1, y: 0 };
   nextDirection = { x: 1, y: 0 };
-  messageEl.textContent = '먹이를 먹어보세요!';
-  clearInterval(timer);
-  timer = setInterval(update, speed);
-  draw();
+  messageEl.textContent = '준비하세요!';
+  runCountdown();
+}
+
+function runCountdown() {
+  let remaining = countdownSeconds;
+  countdownEl.hidden = false;
+  countdownEl.textContent = remaining;
+
+  countdownTimer = setInterval(() => {
+    remaining -= 1;
+
+    if (remaining > 0) {
+      countdownEl.textContent = remaining;
+      return;
+    }
+
+    clearInterval(countdownTimer);
+    countdownTimer = null;
+    countdownEl.textContent = 'START!';
+
+    countdownStartTimer = setTimeout(() => {
+      countdownEl.hidden = true;
+      gameStarted = true;
+      preparing = false;
+      gameOver = false;
+      messageEl.textContent = '먹이를 먹어보세요!';
+      clearInterval(timer);
+      timer = setInterval(update, speed);
+      draw();
+    }, 500);
+  }, 1000);
 }
 
 function randomFood() {
@@ -66,7 +103,7 @@ function randomFood() {
 }
 
 function setDirection(newDirection) {
-  if (!gameStarted || gameOver) return;
+  if (!gameStarted || gameOver || preparing) return;
   if (newDirection.x + direction.x === 0 && newDirection.y + direction.y === 0) return;
   nextDirection = newDirection;
 }
@@ -118,7 +155,14 @@ function draw() {
 function endGame() {
   gameOver = true;
   gameStarted = false;
+  preparing = false;
   clearInterval(timer);
+  clearInterval(countdownTimer);
+  clearTimeout(countdownStartTimer);
+  countdownTimer = null;
+  countdownStartTimer = null;
+  countdownEl.hidden = true;
+  countdownEl.textContent = '';
   messageEl.textContent = `게임 오버! 최종 점수: ${score}`;
   startScreen.hidden = false;
   startBtn.textContent = '다시 시작';
