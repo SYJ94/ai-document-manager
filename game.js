@@ -6,12 +6,12 @@ const startScreen = document.getElementById('start-screen');
 const startBtn = document.getElementById('start');
 const restartBtn = document.getElementById('restart');
 const countdownEl = document.getElementById('countdown');
-const controlButtons = document.querySelectorAll('.control-btn');
+const difficultyButtons = document.querySelectorAll('.difficulty-btn');
 
 const grid = 20;
 const tileCount = canvas.width / grid;
-const speed = 110;
 const countdownSeconds = 3;
+let speed = 110;
 let snake;
 let food;
 let direction;
@@ -23,6 +23,9 @@ let preparing;
 let timer;
 let countdownTimer;
 let countdownStartTimer;
+let startTouchX;
+let startTouchY;
+let selectedSpeed = 110;
 
 function resetGame() {
   clearInterval(timer);
@@ -36,6 +39,7 @@ function resetGame() {
   gameStarted = false;
   gameOver = false;
   preparing = false;
+  speed = selectedSpeed;
   scoreEl.textContent = score;
   messageEl.textContent = 'START 버튼을 눌러 게임을 시작하세요.';
   startScreen.hidden = false;
@@ -168,6 +172,11 @@ function endGame() {
   startBtn.textContent = '다시 시작';
 }
 
+function selectDifficulty(button) {
+  selectedSpeed = Number(button.dataset.speed);
+  difficultyButtons.forEach(item => item.classList.toggle('active', item === button));
+}
+
 function handleKeydown(event) {
   const keyDirections = {
     ArrowUp: { x: 0, y: -1 },
@@ -183,26 +192,40 @@ function handleKeydown(event) {
   setDirection(newDirection);
 }
 
+function handleSwipeStart(event) {
+  if (!gameStarted || gameOver || preparing) return;
+  const point = event.touches[0];
+  startTouchX = point.clientX;
+  startTouchY = point.clientY;
+}
+
+function handleSwipeEnd(event) {
+  if (!gameStarted || gameOver || preparing || startTouchX === undefined) return;
+  const point = event.changedTouches[0];
+  const deltaX = point.clientX - startTouchX;
+  const deltaY = point.clientY - startTouchY;
+  startTouchX = undefined;
+  startTouchY = undefined;
+
+  const minSwipeDistance = 24;
+  if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < minSwipeDistance) return;
+
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    setDirection(deltaX > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
+  } else {
+    setDirection(deltaY > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+  }
+}
+
 document.addEventListener('keydown', handleKeydown);
 startBtn.addEventListener('click', startGame);
-startBtn.addEventListener('pointerup', startGame);
 restartBtn.addEventListener('click', resetGame);
 
-controlButtons.forEach(button => {
-  const directions = {
-    up: { x: 0, y: -1 },
-    down: { x: 0, y: 1 },
-    left: { x: -1, y: 0 },
-    right: { x: 1, y: 0 }
-  };
-
-  const handleControl = (event) => {
-    event.preventDefault();
-    setDirection(directions[button.dataset.direction]);
-  };
-
-  button.addEventListener('pointerdown', handleControl);
-  button.addEventListener('click', handleControl);
+difficultyButtons.forEach(button => {
+  button.addEventListener('click', () => selectDifficulty(button));
 });
+
+canvas.addEventListener('touchstart', handleSwipeStart, { passive: false });
+canvas.addEventListener('touchend', handleSwipeEnd, { passive: false });
 
 resetGame();
