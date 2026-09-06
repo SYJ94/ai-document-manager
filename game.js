@@ -7,19 +7,20 @@ const startBtn = document.getElementById('start');
 const restartBtn = document.getElementById('restart');
 const countdownEl = document.getElementById('countdown');
 const difficultyButtons = document.querySelectorAll('.difficulty-btn');
-const gameBoard = document.getElementById('game-board');
+const joystick = document.getElementById('joystick');
+const joystickStick = document.getElementById('joystick-stick');
 
 const grid = 20;
 const tileCount = canvas.width / grid;
 const countdownSeconds = 3;
-const swipeThreshold = 18;
+const inputQueueLimit = 3;
 
 let speed = 160;
 let selectedSpeed = 160;
 let snake;
 let food;
 let direction;
-let nextDirection;
+let inputQueue;
 let score;
 let gameStarted;
 let gameOver;
@@ -27,20 +28,18 @@ let preparing;
 let timer;
 let countdownTimer;
 let countdownStartTimer;
-let touchStartX = null;
-let touchStartY = null;
-let touchDirectionChanged = false;
+let joystickPointerId = null;
 
 function resetGame() {
   clearInterval(timer);
   clearInterval(countdownTimer);
   clearTimeout(countdownStartTimer);
-  resetTouchTracking();
+  resetJoystickVisual();
 
   snake = [{ x: 10, y: 10 }];
   food = randomFood();
   direction = { x: 0, y: 0 };
-  nextDirection = { x: 0, y: 0 };
+  inputQueue = [];
   score = 0;
   gameStarted = false;
   gameOver = false;
@@ -68,7 +67,7 @@ function startGame(event) {
   preparing = true;
   startScreen.hidden = true;
   direction = { x: 1, y: 0 };
-  nextDirection = { x: 1, y: 0 };
+  inputQueue = [];
   messageEl.textContent = '준비하세요!';
   runCountdown();
 }
@@ -114,19 +113,39 @@ function randomFood() {
   return position;
 }
 
+function sameDirection(a, b) {
+  return a.x === b.x && a.y === b.y;
+}
+
+function isOppositeDirection(a, b) {
+  return a.x + b.x === 0 && a.y + b.y === 0;
+}
+
+function getLastQueuedDirection() {
+  return inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : direction;
+}
+
 function setDirection(newDirection) {
   if (!gameStarted || gameOver || preparing) return;
 
-  // 현재 진행 방향과 정반대인 입력만 차단한다.
-  if (newDirection.x + direction.x === 0 && newDirection.y + direction.y === 0) return;
+  const lastDirection = getLastQueuedDirection();
+  if (sameDirection(newDirection, lastDirection) || isOppositeDirection(newDirection, lastDirection)) return;
 
-  nextDirection = newDirection;
+  if (inputQueue.length < inputQueueLimit) {
+    inputQueue.push({ x: newDirection.x, y: newDirection.y });
+  }
+}
+
+function applyNextDirection() {
+  if (inputQueue.length === 0) return;
+  direction = inputQueue.shift();
 }
 
 function update() {
   if (!gameStarted || gameOver) return;
 
-  direction = nextDirection;
+  applyNextDirection();
+
   const head = {
     x: snake[0].x + direction.x,
     y: snake[0].y + direction.y
@@ -174,7 +193,8 @@ function endGame() {
   clearInterval(timer);
   clearInterval(countdownTimer);
   clearTimeout(countdownStartTimer);
-  resetTouchTracking();
+  inputQueue = [];
+  resetJoystickVisual();
   countdownTimer = null;
   countdownStartTimer = null;
   countdownEl.hidden = true;
@@ -211,58 +231,76 @@ function handleKeydown(event) {
   setDirection(newDirection);
 }
 
-function handleTouchStart(event) {
-  if (!gameStarted || gameOver || preparing) return;
-  if (!event.touches.length) return;
-
-  const touch = event.touches[0];
-  touchStartX = touch.clientX;
-  touchStartY = touch.clientY;
-  touchDirectionChanged = false;
-  event.preventDefault();
-}
-
-function handleTouchMove(event) {
-  if (!gameStarted || gameOver || preparing) return;
-  if (touchStartX === null || touchStartY === null || touchDirectionChanged) {
-    event.preventDefault();
-    return;
-  }
-
-  const touch = event.touches[0];
-  const deltaX = touch.clientX - touchStartX;
-  const deltaY = touch.clientY - touchStartY;
+function getJoystickDirection(event) {
+  const rect = joystick.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const deltaX = event.clientX - centerX;
+  const deltaY = event.clientY - centerY;
   const absX = Math.abs(deltaX);
   const absY = Math.abs(deltaY);
+  const maxDistance = 52;
+  const rawDistance = Math.hypot(deltaX, deltaY);
+  const distance = Math.min(rawDistance, maxDistance);
 
-  if (Math.max(absX, absY) < swipeThreshold) {
-    event.preventDefault();
-    return;
+  if (rawDistance > 0) {
+    const ratio = distance / rawDistance;
+    joystickStick.style.transform = `translate(${deltaX * ratio}px, ${deltaY * ratio}px)`;
   }
 
-  const newDirection = absX > absY
-    ? (deltaX > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 })
-    : (deltaY > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+  if (Math.max(absX, absY) < 14) return null;
 
-  setDirection(newDirection);
-  touchDirectionChanged = true;
-  event.preventDefault();
+  if (absX > absY) {
+    return deltaX > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 };
+  }
+
+  return deltaY > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 };
 }
 
-function handleTouchEnd(event) {
-  resetTouchTracking();
+function handleJoystickPointerDown(event) {
+  if (!gameStarted || gameOver || preparing) return;
+  if (joystickPointerId !== null) return;
+
+  joystickPointerId = event.pointerId;
+  joystick.setPointerCapture(event.pointerId);
   event.preventDefault();
+  const newDirection = getJoystickDirection(event);
+  if (newDirection) setDirection(newDirection);
 }
 
-function handleTouchCancel(event) {
-  resetTouchTracking();
+function handleJoystickPointerMove(event) {
+  if (event.pointerId !== joystickPointerId) return;
+
   event.preventDefault();
+  const newDirection = getJoystickDirection(event);
+  if (newDirection) setDirection(newDirection);
 }
 
-function resetTouchTracking() {
-  touchStartX = null;
-  touchStartY = null;
-  touchDirectionChanged = false;
+function handleJoystickPointerUp(event) {
+  if (event.pointerId !== joystickPointerId) return;
+
+  event.preventDefault();
+  resetJoystickVisual(event.pointerId);
+}
+
+function handleJoystickPointerCancel(event) {
+  if (event.pointerId !== joystickPointerId) return;
+  resetJoystickVisual(event.pointerId);
+}
+
+function resetJoystickVisual(pointerId = null) {
+  if (pointerId !== null && joystickPointerId !== pointerId) return;
+
+  if (joystickPointerId !== null && joystick.releasePointerCapture) {
+    try {
+      joystick.releasePointerCapture(joystickPointerId);
+    } catch (error) {
+      // Pointer capture가 이미 해제된 경우에는 무시한다.
+    }
+  }
+
+  joystickPointerId = null;
+  if (joystickStick) joystickStick.style.transform = 'translate(0, 0)';
 }
 
 document.addEventListener('keydown', handleKeydown);
@@ -273,9 +311,10 @@ difficultyButtons.forEach(button => {
   button.addEventListener('click', () => selectDifficulty(button));
 });
 
-gameBoard.addEventListener('touchstart', handleTouchStart, { passive: false });
-gameBoard.addEventListener('touchmove', handleTouchMove, { passive: false });
-gameBoard.addEventListener('touchend', handleTouchEnd, { passive: false });
-gameBoard.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+joystick.addEventListener('pointerdown', handleJoystickPointerDown, { passive: false });
+joystick.addEventListener('pointermove', handleJoystickPointerMove, { passive: false });
+joystick.addEventListener('pointerup', handleJoystickPointerUp, { passive: false });
+joystick.addEventListener('pointercancel', handleJoystickPointerCancel, { passive: false });
+joystick.addEventListener('lostpointercapture', () => resetJoystickVisual());
 
 resetGame();
