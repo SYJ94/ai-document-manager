@@ -7,11 +7,15 @@ const startBtn = document.getElementById('start');
 const restartBtn = document.getElementById('restart');
 const countdownEl = document.getElementById('countdown');
 const difficultyButtons = document.querySelectorAll('.difficulty-btn');
+const gameBoard = document.getElementById('game-board');
 
 const grid = 20;
 const tileCount = canvas.width / grid;
 const countdownSeconds = 3;
+const swipeThreshold = 24;
+
 let speed = 110;
+let selectedSpeed = 110;
 let snake;
 let food;
 let direction;
@@ -23,14 +27,16 @@ let preparing;
 let timer;
 let countdownTimer;
 let countdownStartTimer;
-let startTouchX;
-let startTouchY;
-let selectedSpeed = 110;
+let pointerStartX = null;
+let pointerStartY = null;
+let activePointerId = null;
 
 function resetGame() {
   clearInterval(timer);
   clearInterval(countdownTimer);
   clearTimeout(countdownStartTimer);
+  resetPointerTracking();
+
   snake = [{ x: 10, y: 10 }];
   food = randomFood();
   direction = { x: 0, y: 0 };
@@ -40,8 +46,9 @@ function resetGame() {
   gameOver = false;
   preparing = false;
   speed = selectedSpeed;
+
   scoreEl.textContent = score;
-  messageEl.textContent = 'START 버튼을 눌러 게임을 시작하세요.';
+  messageEl.textContent = '난이도를 선택하고 START 버튼을 눌러 게임을 시작하세요.';
   startScreen.hidden = false;
   countdownEl.hidden = true;
   countdownEl.textContent = '';
@@ -57,6 +64,7 @@ function startGame(event) {
     resetGame();
   }
 
+  speed = selectedSpeed;
   preparing = true;
   startScreen.hidden = true;
   direction = { x: 1, y: 0 };
@@ -108,7 +116,10 @@ function randomFood() {
 
 function setDirection(newDirection) {
   if (!gameStarted || gameOver || preparing) return;
-  if (newDirection.x + direction.x === 0 && newDirection.y + direction.y === 0) return;
+
+  // 같은 틱에서 여러 번 입력해도 가장 최근의 다음 방향을 기준으로 역주행을 막는다.
+  if (newDirection.x + nextDirection.x === 0 && newDirection.y + nextDirection.y === 0) return;
+
   nextDirection = newDirection;
 }
 
@@ -163,6 +174,7 @@ function endGame() {
   clearInterval(timer);
   clearInterval(countdownTimer);
   clearTimeout(countdownStartTimer);
+  resetPointerTracking();
   countdownTimer = null;
   countdownStartTimer = null;
   countdownEl.hidden = true;
@@ -173,8 +185,11 @@ function endGame() {
 }
 
 function selectDifficulty(button) {
+  if (gameStarted || preparing) return;
+
   selectedSpeed = Number(button.dataset.speed);
   difficultyButtons.forEach(item => item.classList.toggle('active', item === button));
+  messageEl.textContent = `${button.textContent.trim()} 난이도를 선택했습니다. START 버튼을 눌러 시작하세요.`;
 }
 
 function handleKeydown(event) {
@@ -182,7 +197,15 @@ function handleKeydown(event) {
     ArrowUp: { x: 0, y: -1 },
     ArrowDown: { x: 0, y: 1 },
     ArrowLeft: { x: -1, y: 0 },
-    ArrowRight: { x: 1, y: 0 }
+    ArrowRight: { x: 1, y: 0 },
+    w: { x: 0, y: -1 },
+    W: { x: 0, y: -1 },
+    s: { x: 0, y: 1 },
+    S: { x: 0, y: 1 },
+    a: { x: -1, y: 0 },
+    A: { x: -1, y: 0 },
+    d: { x: 1, y: 0 },
+    D: { x: 1, y: 0 }
   };
 
   const newDirection = keyDirections[event.key];
@@ -192,29 +215,66 @@ function handleKeydown(event) {
   setDirection(newDirection);
 }
 
-function handleSwipeStart(event) {
+function handlePointerDown(event) {
   if (!gameStarted || gameOver || preparing) return;
-  const point = event.touches[0];
-  startTouchX = point.clientX;
-  startTouchY = point.clientY;
+  if (activePointerId !== null) return;
+
+  activePointerId = event.pointerId;
+  pointerStartX = event.clientX;
+  pointerStartY = event.clientY;
+
+  if (gameBoard.setPointerCapture) {
+    gameBoard.setPointerCapture(event.pointerId);
+  }
+
+  event.preventDefault();
 }
 
-function handleSwipeEnd(event) {
-  if (!gameStarted || gameOver || preparing || startTouchX === undefined) return;
-  const point = event.changedTouches[0];
-  const deltaX = point.clientX - startTouchX;
-  const deltaY = point.clientY - startTouchY;
-  startTouchX = undefined;
-  startTouchY = undefined;
+function handlePointerMove(event) {
+  if (event.pointerId !== activePointerId) return;
+  event.preventDefault();
+}
 
-  const minSwipeDistance = 24;
-  if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < minSwipeDistance) return;
+function handlePointerUp(event) {
+  if (event.pointerId !== activePointerId || pointerStartX === null || pointerStartY === null) return;
 
-  if (Math.abs(deltaX) > Math.abs(deltaY)) {
-    setDirection(deltaX > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
-  } else {
-    setDirection(deltaY > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+  const deltaX = event.clientX - pointerStartX;
+  const deltaY = event.clientY - pointerStartY;
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+
+  if (Math.max(absX, absY) >= swipeThreshold) {
+    if (absX > absY) {
+      setDirection(deltaX > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
+    } else {
+      setDirection(deltaY > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+    }
   }
+
+  resetPointerTracking(event.pointerId);
+  event.preventDefault();
+}
+
+function handlePointerCancel(event) {
+  if (event.pointerId !== activePointerId) return;
+  resetPointerTracking(event.pointerId);
+}
+
+function resetPointerTracking(pointerId = null) {
+  if (pointerId !== null && activePointerId !== pointerId) return;
+
+  pointerStartX = null;
+  pointerStartY = null;
+
+  if (activePointerId !== null && gameBoard.releasePointerCapture) {
+    try {
+      gameBoard.releasePointerCapture(activePointerId);
+    } catch (error) {
+      // Pointer capture가 이미 해제된 경우에는 무시한다.
+    }
+  }
+
+  activePointerId = null;
 }
 
 document.addEventListener('keydown', handleKeydown);
@@ -225,7 +285,10 @@ difficultyButtons.forEach(button => {
   button.addEventListener('click', () => selectDifficulty(button));
 });
 
-canvas.addEventListener('touchstart', handleSwipeStart, { passive: false });
-canvas.addEventListener('touchend', handleSwipeEnd, { passive: false });
+gameBoard.addEventListener('pointerdown', handlePointerDown, { passive: false });
+gameBoard.addEventListener('pointermove', handlePointerMove, { passive: false });
+gameBoard.addEventListener('pointerup', handlePointerUp, { passive: false });
+gameBoard.addEventListener('pointercancel', handlePointerCancel, { passive: false });
+gameBoard.addEventListener('lostpointercapture', () => resetPointerTracking());
 
 resetGame();
