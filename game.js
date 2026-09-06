@@ -117,8 +117,9 @@ function randomFood() {
 function setDirection(newDirection) {
   if (!gameStarted || gameOver || preparing) return;
 
-  // 같은 틱에서 여러 번 입력해도 가장 최근의 다음 방향을 기준으로 역주행을 막는다.
-  if (newDirection.x + nextDirection.x === 0 && newDirection.y + nextDirection.y === 0) return;
+  // 현재 진행 방향과 정반대인 입력만 차단한다.
+  // 다음 방향을 기준으로 검사하면 빠르게 연속 입력했을 때 정상적인 방향 전환까지 막힐 수 있다.
+  if (newDirection.x + direction.x === 0 && newDirection.y + direction.y === 0) return;
 
   nextDirection = newDirection;
 }
@@ -198,17 +199,13 @@ function handleKeydown(event) {
     ArrowDown: { x: 0, y: 1 },
     ArrowLeft: { x: -1, y: 0 },
     ArrowRight: { x: 1, y: 0 },
-    w: { x: 0, y: -1 },
-    W: { x: 0, y: -1 },
-    s: { x: 0, y: 1 },
-    S: { x: 0, y: 1 },
-    a: { x: -1, y: 0 },
-    A: { x: -1, y: 0 },
-    d: { x: 1, y: 0 },
-    D: { x: 1, y: 0 }
+    KeyW: { x: 0, y: -1 },
+    KeyS: { x: 0, y: 1 },
+    KeyA: { x: -1, y: 0 },
+    KeyD: { x: 1, y: 0 }
   };
 
-  const newDirection = keyDirections[event.key];
+  const newDirection = keyDirections[event.code];
   if (!newDirection) return;
 
   event.preventDefault();
